@@ -34,7 +34,6 @@ impl Led {
 
 fn main() {
     let light = Led::new("tpacpi::lid_logo_dot"); 
-    //blink_lid_light(10000,Duration::from_millis(50));
 
     light.blink(Duration::from_millis(100));
 }
