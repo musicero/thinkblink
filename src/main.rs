@@ -11,11 +11,11 @@ impl Led {
     pub fn new(device: &str) -> Self {
         Self {
             device: device.to_string(),
-            tu: Duration::from_millis(300),
+            tu: Duration::from_millis(100),
         }
     }
     
-    fn blink(&self, delay: Duration) {
+    pub fn blink(&self, delay: Duration) {
         loop{
             self.brightness(0);
             thread::sleep(delay);
@@ -24,63 +24,71 @@ impl Led {
         }
     }
 
-    pub fn morse(&self, mut word: String) {
-        word = word.to_uppercase();
+    pub fn morse(&self, mstring: &str) {
+        let mstring = mstring.to_string().to_uppercase();
+        self.brightness(0);
+        thread::sleep(Duration::from_millis(1000));
         loop{
-            for letter in word.chars() {
-
-                if letter == ' ' {
-                    thread::sleep(self.tu*3);
-                    continue;
-                }
+            for letter in mstring.chars() {
 
                 let morsed_letter = self.morsify(letter);
                 
-                for i in 0..8 {
-                    let val = (morsed_letter >> i) & 1;
-                    if val>0 {
-                        self.line();
-                    } else {
-                        self.dot();
-                    }
-                    thread::sleep(self.tu);
+                // write one letter
+                for val in morsed_letter {
+                    match val {
+                        2 => continue,
+                        1 => self.line(),
+                        0 => self.dot(), 
+                        _ => println!("morse val error"),
+                    } thread::sleep(self.tu);
                 }
 
                 thread::sleep(self.tu*3);
             }
-            thread::sleep(self.tu*10);
+            thread::sleep(self.tu*9);
         }
     }
 
-    fn morsify(&self, letter: char) -> u8{
+    fn morsify(&self, letter: char) -> [u8; 5]{
         match letter {
-            'A' => 0b01,
-            'B' => 0b1000,
-            'C' => 0b1010,
-            'D' => 0b100,
-            'E' => 0b0,
-            'F' => 0b0010,
-            'G' => 0b110,
-            'H' => 0b0000,
-            'I' => 0b00,
-            'J' => 0b0111,
-            'K' => 0b101,
-            'L' => 0b0100,
-            'M' => 0b11,
-            'N' => 0b10,
-            'O' => 0b111,
-            'P' => 0b0110,
-            'Q' => 0b1101,
-            'R' => 0b010,
-            'S' => 0b000,
-            'T' => 0b1,
-            'U' => 0b001,
-            'V' => 0b0001,
-            'W' => 0b011,
-            'X' => 0b1001,
-            'Y' => 0b1011,
-            'Z' => 0b1100,
-            _   => 0b0000000
+            'A' => [0,1, 2,2,2],
+            'B' => [1,0,0,0, 2],
+            'C' => [1,0,1,0, 2],
+            'D' => [1,0,0, 2,2],
+            'E' => [0 ,2,2,2,2],
+            'F' => [0,0,1,0, 2],
+            'G' => [1,1,0, 2,2],
+            'H' => [0,0,0,0, 2],
+            'I' => [0,0, 2,2,2],
+            'J' => [0,1,1,1, 2],
+            'K' => [1,0,1, 2,2],
+            'L' => [0,1,0,0, 2],
+            'M' => [1,1, 2,2,2],
+            'N' => [1,0, 2,2,2],
+            'O' => [1,1,1, 2,2],
+            'P' => [0,1,1,0, 2],
+            'Q' => [1,1,0,1, 2],
+            'R' => [0,1,0, 2,2],
+            'S' => [0,0,0, 2,2],
+            'T' => [1, 2,2,2,2],
+            'U' => [0,0,1, 2,2],
+            'V' => [0,0,0,1, 2],
+            'W' => [0,1,1, 2,2],
+            'X' => [1,0,0,1, 2],
+            'Y' => [1,0,1,1, 2],
+            'Z' => [1,1,0,0, 2],
+            '1' => [0,1,1,1,1 ],
+            '2' => [0,0,1,1,1 ],
+            '3' => [0,0,0,1,1 ],
+            '4' => [0,0,0,0,1 ],
+            '5' => [0,0,0,0,0 ],
+            '6' => [1,0,0,0,0 ],
+            '7' => [1,1,0,0,0 ],
+            '8' => [1,1,1,0,0 ],
+            '9' => [1,1,1,1,0 ],
+            '0' => [1,1,1,1,1 ],
+            ' ' => [ 2,2,2,2,2],
+            _   => [ 2,2,2,2,2],
         }
     }
 
@@ -113,6 +121,6 @@ fn main() {
     let light = Led::new("tpacpi::lid_logo_dot"); 
 
     //light.blink(Duration::from_millis(100));
-    light.morse("ABC".to_string());
+    light.morse("I USE ARCH BTW");
 }
 
