@@ -1,7 +1,12 @@
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
+use std::env;
 
+enum Symbol {
+    Dash,
+    Dot,
+}
 struct Led {
     device: String,
     tu: Duration,
@@ -11,16 +16,13 @@ impl Led {
     pub fn new(device: &str) -> Self {
         Self {
             device: device.to_string(),
-            tu: Duration::from_millis(100),
+            tu: Duration::from_millis(256),
         }
     }
     
-    pub fn blink(&self, delay: Duration) {
+    pub fn blink(&self) {
         loop{
-            self.brightness(0);
-            thread::sleep(delay);
-            self.brightness(255);
-            thread::sleep(delay);
+            self.sig(Symbol::Dot);
         }
     }
 
@@ -30,20 +32,25 @@ impl Led {
         thread::sleep(Duration::from_millis(1000));
         loop{
             for letter in mstring.chars() {
+                
+                if letter == ' ' {
+                    thread::sleep(self.tu*7);
+                    continue;
+                }
 
                 let morsed_letter = self.morsify(letter);
                 
                 // write one letter
-                for val in morsed_letter {
-                    match val {
+                for signal in morsed_letter {
+                    match signal {
                         2 => continue,
-                        1 => self.line(),
-                        0 => self.dot(), 
+                        1 => self.sig(Symbol::Dash),
+                        0 => self.sig(Symbol::Dot),
                         _ => println!("morse val error"),
-                    } thread::sleep(self.tu);
+                    }
                 }
+                thread::sleep(self.tu*3); // letter spacing
 
-                thread::sleep(self.tu*3);
             }
             thread::sleep(self.tu*9);
         }
@@ -91,17 +98,17 @@ impl Led {
             _   => [ 2,2,2,2,2],
         }
     }
+    
+    fn sig(&self, s: Symbol){
+        let tu_mult:u32 = match s {
+            Symbol::Dot => 1,
+            Symbol::Dash => 3,
+        };
 
-    fn dot(&self){
         self.brightness(255);
+        thread::sleep(self.tu*tu_mult);
+        self.brightness(0);
         thread::sleep(self.tu);
-        self.brightness(0);
-    }
-
-    fn line(&self){
-        self.brightness(255);
-        thread::sleep(self.tu*3);
-        self.brightness(0);
     }
 
     fn brightness(&self, strength: u8){
@@ -119,8 +126,16 @@ impl Led {
 
 fn main() {
     let light = Led::new("tpacpi::lid_logo_dot"); 
+    
+    let args: Vec<String> = env::args().collect();
 
     //light.blink(Duration::from_millis(100));
-    light.morse("I USE ARCH BTW");
+
+    if args.len() > 1 {
+        light.morse(&args[1]);
+    } else {
+        light.morse("I USE ARCH BTW");
+    }
+
 }
 
